@@ -2,11 +2,13 @@ package com.example.scheduler.repository;
 
 import com.example.scheduler.dto.SchedulerResponseDto;
 import com.example.scheduler.entity.Scheduler;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -59,7 +61,8 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
 
     @Override
     public Scheduler findScheduleByIdOrElseThrow(Long id) {
-        return ();
+        List<Scheduler> result = jdbcTemplate.query("select * from schedules where id = ? ", schedulerRowMapperV2(), id);
+        return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exists id = " + id));
     }
 
 
@@ -79,14 +82,17 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
         };
     }
 
-    private RowMapper<Scheduler> SchedulerRowMapperV2() {
+    private RowMapper<Scheduler> schedulerRowMapperV2() {
         return new RowMapper<Scheduler>() {
             @Override
             public Scheduler mapRow(ResultSet rs, int rowNum) throws SQLException {
                 return new Scheduler(
+                        rs.getLong("id"),
                         rs.getString("todo"),
                         rs.getString("writer"),
-                        rs.getString("password")
+                        rs.getString("password"),
+                        rs.getTimestamp("create_date").toLocalDateTime(),
+                        rs.getTimestamp("update_date").toLocalDateTime()
                 );
             }
         };

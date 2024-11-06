@@ -21,5 +21,7 @@ public class SchedulerResponseDto {
         this.todo = scheduler.getTodo();
         this.writer = scheduler.getWriter();
         this.password = scheduler.getPassword();
+        this.create_date = scheduler.getCreate_date().toLocalDate();
+        this.update_date = scheduler.getUpdate_date().toLocalDate();
     }
 }
