@@ -2,9 +2,7 @@ package com.example.scheduler.Controller;
 
 import com.example.scheduler.dto.SchedulerRequestDto;
 import com.example.scheduler.dto.SchedulerResponseDto;
-import com.example.scheduler.entity.Scheduler;
 import com.example.scheduler.service.SchedulerService;
-import lombok.Builder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
