@@ -5,8 +5,8 @@ CREATE TABLE `schedules` (
     'todo' VARCHAR(200) NOT NULL,
     'writer' VARCHAR(20) NOT NULL,
     'password' VARCHAR(20) NOT NULL,
-    'create_date' DATETIME NOT NULL,
-    'update_date' DATETIME NOT NULL
+    'create_date' TIMESTAMP  NOT NULL,
+    'update_date' TIMESTAMP  NOT NULL
     PRIMARY KEY ('ID')
 );
 

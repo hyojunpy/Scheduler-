@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface SchedulerService {
     SchedulerResponseDto saveSchedule(SchedulerRequestDto dto);
-    List<SchedulerResponseDto> findAllSchedules();
+    List<SchedulerResponseDto> findAllSchedules(String update_date, String writer);
+    SchedulerResponseDto findScheduleById(Long id);
 }

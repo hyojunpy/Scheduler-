@@ -4,10 +4,10 @@ import com.example.scheduler.dto.SchedulerRequestDto;
 import com.example.scheduler.dto.SchedulerResponseDto;
 import com.example.scheduler.entity.Scheduler;
 import com.example.scheduler.repository.SchedulerRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.sql.Timestamp;
-import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -28,8 +28,16 @@ public class SchedulerServiceImpl implements SchedulerService {
     }
 
     @Override
-    public List<SchedulerResponseDto> findAllSchedules() {
+    public List<SchedulerResponseDto> findAllSchedules(String update_date, String writer) {
 
-        return schedulerRepository.findAllSchedules();
+        return schedulerRepository.findAllSchedules(update_date, writer);
+    }
+
+    @Override
+    public SchedulerResponseDto findScheduleById(Long id) {
+
+        Scheduler scheduler = schedulerRepository.findScheduleByIdOrElseThrow(id);
+
+        return new SchedulerResponseDto(scheduler);
     }
 }

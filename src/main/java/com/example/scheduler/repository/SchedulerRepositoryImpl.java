@@ -1,8 +1,9 @@
 package com.example.scheduler.repository;
 
-import com.example.scheduler.dto.SchedulerRequestDto;
 import com.example.scheduler.dto.SchedulerResponseDto;
 import com.example.scheduler.entity.Scheduler;
+import com.fasterxml.jackson.databind.util.ArrayBuilders;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -10,11 +11,14 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.io.Writer;
+import java.lang.reflect.Member;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 public class SchedulerRepositoryImpl implements SchedulerRepository {
@@ -39,14 +43,30 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
 
         Number key = jdbcInsert.executeAndReturnKey(new MapSqlParameterSource(parameters));
 
-        return new SchedulerResponseDto(key.longValue(), scheduler.getTodo(), scheduler.getWriter(), scheduler.getPassword(), scheduler.getCreate_date(), scheduler.getUpdate_date());
+        return new SchedulerResponseDto(key.longValue(), scheduler.getTodo(), scheduler.getWriter(), scheduler.getPassword(), scheduler.getCreate_date().toLocalDate(), scheduler.getUpdate_date().toLocalDate());
     }
 
     @Override
-    public List<SchedulerResponseDto> findAllSchedules() {
-
-        return jdbcTemplate.query("select * from schedules", scheduleRowMapper());
+    public List<SchedulerResponseDto> findAllSchedules(String update_date, String writer) {
+        if(!update_date.isEmpty() && !writer.isEmpty()) {
+            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? AND writer = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date,writer);
+        }
+        else if(!update_date.isEmpty()) {
+            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date );
+        }
+        else if (!writer.isEmpty()) {
+            return jdbcTemplate.query("select * from schedules where writer = ? ORDER BY  update_date DESC ", scheduleRowMapper(), writer);
+        }
+        else {
+            return jdbcTemplate.query("select * from schedules", scheduleRowMapper());
+        }
     }
+
+    @Override
+    public Scheduler findScheduleByIdOrElseThrow(Long id) {
+        return ();
+    }
+
 
     private RowMapper<SchedulerResponseDto> scheduleRowMapper() {
         return new RowMapper<SchedulerResponseDto>() {
@@ -57,11 +77,23 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
                         rs.getString("todo"),
                         rs.getString("writer"),
                         rs.getString("password"),
-                        rs.getTimestamp("create_date").toLocalDateTime(),
-                        rs.getTimestamp("update_date").toLocalDateTime()
+                        rs.getTimestamp("create_date").toLocalDateTime().toLocalDate(),
+                        rs.getTimestamp("update_date").toLocalDateTime().toLocalDate()
                 );
             }
         };
     }
 
+    private RowMapper<Scheduler> SchedulerRowMapperV2() {
+        return new RowMapper<Scheduler>() {
+            @Override
+            public Scheduler mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return new Scheduler(
+                        rs.getString("todo"),
+                        rs.getString("writer"),
+                        rs.getString("password")
+                );
+            }
+        };
+    }
 }
