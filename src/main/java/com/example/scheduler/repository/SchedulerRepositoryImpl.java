@@ -8,9 +8,11 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.sql.DataSource;
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -46,7 +48,7 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
     @Override
     public List<SchedulerResponseDto> findAllSchedules(String update_date, String writer) {
         if(!update_date.isEmpty() && !writer.isEmpty()) {
-            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? AND writer = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date,writer);
+            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? AND writer = ? ORDER BY update-date DESC ", scheduleRowMapper(), update_date,writer);
         }
         else if(!update_date.isEmpty()) {
             return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date );
@@ -64,6 +66,26 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
         List<Scheduler> result = jdbcTemplate.query("select * from schedules where id = ? ", schedulerRowMapperV2(), id);
         return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exists id = " + id));
     }
+
+    @Override
+    public int updateSchedule(Long id, String password, String todo, String writer) {
+        if(todo == null) {
+            return jdbcTemplate.update("UPDATE schedules SET writer = ? ,update_date = now() WHERE id = ? AND password = ? ",  writer, id, password);
+        }
+        else if(writer == null) {
+            return jdbcTemplate.update("UPDATE schedules SET todo = ?, update_date = now() WHERE id = ? AND password = ? ", todo, id, password);
+        }
+        else{
+            return jdbcTemplate.update("UPDATE schedules SET todo = ?, writer = ? ,update_date = now() WHERE id = ? AND password = ? ", todo, writer, id, password);
+        }
+    }
+
+    @Override
+    public int deleteSchedule(Long id, String password) {
+        return jdbcTemplate.update("delete from schedules where id = ? AND password = ?", id, password);
+    }
+
+
 
 
     private RowMapper<SchedulerResponseDto> scheduleRowMapper() {
