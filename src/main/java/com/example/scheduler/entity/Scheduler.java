@@ -3,12 +3,11 @@ package com.example.scheduler.entity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
-public class Scheduler implements Serializable {
+public class Scheduler {
     private Long id;
     private String todo;
     private String writer;
