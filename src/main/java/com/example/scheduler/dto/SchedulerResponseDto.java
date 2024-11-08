@@ -15,7 +15,7 @@ public class SchedulerResponseDto {
     private String password;
     private LocalDate create_date;
     private LocalDate update_date;
-//
+
     public SchedulerResponseDto(Scheduler scheduler) {
         this.id = scheduler.getId();
         this.todo = scheduler.getTodo();

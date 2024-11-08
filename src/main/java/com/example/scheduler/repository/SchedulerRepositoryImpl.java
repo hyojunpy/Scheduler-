@@ -8,9 +8,11 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.sql.DataSource;
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -19,13 +21,14 @@ import java.util.Map;
 
 @Repository
 public class SchedulerRepositoryImpl implements SchedulerRepository {
-//
+    //
     private final JdbcTemplate jdbcTemplate;
 
     public SchedulerRepositoryImpl(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
+    //일정 생성
     @Override
     public SchedulerResponseDto saveSchedule(Scheduler scheduler) {
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
@@ -42,11 +45,11 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
 
         return new SchedulerResponseDto(key.longValue(), scheduler.getTodo(), scheduler.getWriter(), scheduler.getPassword(), scheduler.getCreate_date().toLocalDate(), scheduler.getUpdate_date().toLocalDate());
     }
-
+    //전체 일정 조회
     @Override
     public List<SchedulerResponseDto> findAllSchedules(String update_date, String writer) {
         if(!update_date.isEmpty() && !writer.isEmpty()) {
-            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? AND writer = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date,writer);
+            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? AND writer = ? ORDER BY update-date DESC ", scheduleRowMapper(), update_date,writer);
         }
         else if(!update_date.isEmpty()) {
             return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date );
@@ -59,13 +62,36 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
         }
     }
 
+    //선택 일정 조회
     @Override
     public Scheduler findScheduleByIdOrElseThrow(Long id) {
         List<Scheduler> result = jdbcTemplate.query("select * from schedules where id = ? ", schedulerRowMapperV2(), id);
         return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exists id = " + id));
     }
 
+    //선택 일정 수정
+    @Override
+    public int updateSchedule(Long id, String password, String todo, String writer) {
+        if(todo == null) {
+            return jdbcTemplate.update("UPDATE schedules SET writer = ? ,update_date = now() WHERE id = ? AND password = ? ",  writer, id, password);
+        }
+        else if(writer == null) {
+            return jdbcTemplate.update("UPDATE schedules SET todo = ?, update_date = now() WHERE id = ? AND password = ? ", todo, id, password);
+        }
+        else{
+            return jdbcTemplate.update("UPDATE schedules SET todo = ?, writer = ? ,update_date = now() WHERE id = ? AND password = ? ", todo, writer, id, password);
+        }
+    }
 
+    //선택 일정 삭제
+    @Override
+    public int deleteSchedule(Long id, String password) {
+        return jdbcTemplate.update("delete from schedules where id = ? AND password = ?", id, password);
+    }
+
+
+
+    //Row를 ResertSet에 매핑
     private RowMapper<SchedulerResponseDto> scheduleRowMapper() {
         return new RowMapper<SchedulerResponseDto>() {
             @Override
@@ -82,6 +108,7 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
         };
     }
 
+    //Row를 ResertSet에 매핑
     private RowMapper<Scheduler> schedulerRowMapperV2() {
         return new RowMapper<Scheduler>() {
             @Override
