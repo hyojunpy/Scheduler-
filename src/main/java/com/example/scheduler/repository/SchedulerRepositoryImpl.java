@@ -15,6 +15,7 @@ import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,30 +33,36 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
     @Override
     public SchedulerResponseDto saveSchedule(Scheduler scheduler) {
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
-        jdbcInsert.withTableName("schedules").usingGeneratedKeyColumns("id");
+        jdbcInsert.withTableName("schedules").usingGeneratedKeyColumns("id").usingColumns("todo","password", "userId");
 
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("todo", scheduler.getTodo());
-        parameters.put("writer", scheduler.getWriter());
         parameters.put("password", scheduler.getPassword());
-        parameters.put("create_date", scheduler.getCreate_date());
-        parameters.put("update_date", scheduler.getUpdate_date());
+        parameters.put("userId", scheduler.getUserId());
 
         Number key = jdbcInsert.executeAndReturnKey(new MapSqlParameterSource(parameters));
+        long id = key.longValue();
 
-        return new SchedulerResponseDto(key.longValue(), scheduler.getTodo(), scheduler.getWriter(), scheduler.getPassword(), scheduler.getCreate_date().toLocalDate(), scheduler.getUpdate_date().toLocalDate());
+        List<SchedulerResponseDto> schedulerResponseDtos = jdbcTemplate.query("SELECT id, todo, userId, createDate, updateDate FROM schedules WHERE id = ? ",scheduleRowMapper() ,id);
+
+        if(!schedulerResponseDtos.isEmpty()) {
+            return  schedulerResponseDtos.get(0);
+        }
+        else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "schedule not found");
+        }
     }
     //전체 일정 조회
     @Override
-    public List<SchedulerResponseDto> findAllSchedules(String update_date, String writer) {
-        if(!update_date.isEmpty() && !writer.isEmpty()) {
-            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? AND writer = ? ORDER BY update-date DESC ", scheduleRowMapper(), update_date,writer);
+    public List<SchedulerResponseDto> findAllSchedules(LocalDate updateDate, Long userId) {
+        if(updateDate != null && userId != null ) {
+            return jdbcTemplate.query("select * from schedules where DATE(updateDate) = ? AND userId = ? ORDER BY updateDate DESC ", scheduleRowMapper(), updateDate,userId);
         }
-        else if(!update_date.isEmpty()) {
-            return jdbcTemplate.query("select * from schedules where DATE(update_date) = ? ORDER BY update_date DESC ", scheduleRowMapper(), update_date );
+        else if(updateDate != null) {
+            return jdbcTemplate.query("select * from schedules where DATE(updateDate) = ? ORDER BY updateDate DESC ", scheduleRowMapper(), updateDate );
         }
-        else if (!writer.isEmpty()) {
-            return jdbcTemplate.query("select * from schedules where writer = ? ORDER BY  update_date DESC ", scheduleRowMapper(), writer);
+        else if (userId != null) {
+            return jdbcTemplate.query("select * from schedules where userId = ? ORDER BY  updateDate DESC ", scheduleRowMapper(), userId);
         }
         else {
             return jdbcTemplate.query("select * from schedules", scheduleRowMapper());
@@ -64,29 +71,29 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
 
     //선택 일정 조회
     @Override
-    public Scheduler findScheduleByIdOrElseThrow(Long id) {
-        List<Scheduler> result = jdbcTemplate.query("select * from schedules where id = ? ", schedulerRowMapperV2(), id);
-        return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exists id = " + id));
+    public Scheduler findScheduleByIdOrElseThrow(Long UserId) {
+        List<Scheduler> result = jdbcTemplate.query("select * from schedules where UserId = ? ", schedulerRowMapperV2(), UserId);
+        return result.stream().findAny().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exists UserId = " + UserId));
     }
 
     //선택 일정 수정
     @Override
-    public int updateSchedule(Long id, String password, String todo, String writer) {
+    public int updateSchedule(Long userId, String password, String todo) {
         if(todo == null) {
-            return jdbcTemplate.update("UPDATE schedules SET writer = ? ,update_date = now() WHERE id = ? AND password = ? ",  writer, id, password);
+            return jdbcTemplate.update("UPDATE schedules SET userId = ? ,updateDate = now() WHERE userId = ? AND password = ? ",  userId, userId, password);
         }
-        else if(writer == null) {
-            return jdbcTemplate.update("UPDATE schedules SET todo = ?, update_date = now() WHERE id = ? AND password = ? ", todo, id, password);
+        else if(userId == null) {
+            return jdbcTemplate.update("UPDATE schedules SET todo = ?, updateDate = now() WHERE userId = ? AND password = ? ", todo, userId, password);
         }
         else{
-            return jdbcTemplate.update("UPDATE schedules SET todo = ?, writer = ? ,update_date = now() WHERE id = ? AND password = ? ", todo, writer, id, password);
+            return jdbcTemplate.update("UPDATE schedules SET todo = ?, updateDate = now() WHERE userId = ? AND password = ? ", todo, userId, password);
         }
     }
 
     //선택 일정 삭제
     @Override
-    public int deleteSchedule(Long id, String password) {
-        return jdbcTemplate.update("delete from schedules where id = ? AND password = ?", id, password);
+    public int deleteSchedule(Long userId, String password) {
+        return jdbcTemplate.update("delete from schedules where userId = ? AND password = ?", userId, password);
     }
 
 
@@ -98,11 +105,10 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
             public SchedulerResponseDto mapRow(ResultSet rs, int rowNum) throws SQLException {
                 return new SchedulerResponseDto(
                         rs.getLong("id"),
+                        rs.getLong("userId"),
                         rs.getString("todo"),
-                        rs.getString("writer"),
-                        rs.getString("password"),
-                        rs.getTimestamp("create_date").toLocalDateTime().toLocalDate(),
-                        rs.getTimestamp("update_date").toLocalDateTime().toLocalDate()
+                        rs.getTimestamp("createDate"),
+                        rs.getTimestamp("updateDate")
                 );
             }
         };
@@ -115,11 +121,11 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
             public Scheduler mapRow(ResultSet rs, int rowNum) throws SQLException {
                 return new Scheduler(
                         rs.getLong("id"),
+                        rs.getLong("userId"),
                         rs.getString("todo"),
-                        rs.getString("writer"),
                         rs.getString("password"),
-                        rs.getTimestamp("create_date").toLocalDateTime(),
-                        rs.getTimestamp("update_date").toLocalDateTime()
+                        rs.getTimestamp("createDate"),
+                        rs.getTimestamp("updateDate")
                 );
             }
         };
