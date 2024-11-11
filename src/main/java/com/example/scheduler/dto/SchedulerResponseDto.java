@@ -4,24 +4,24 @@ import com.example.scheduler.entity.Scheduler;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
 public class SchedulerResponseDto {
     private Long id;
+    private Long userId;
     private String todo;
-    private String writer;
-    private String password;
-    private LocalDate create_date;
-    private LocalDate update_date;
-
+    private Timestamp createDate;
+    private Timestamp updateDate;
+//
     public SchedulerResponseDto(Scheduler scheduler) {
         this.id = scheduler.getId();
+        this.userId = scheduler.getUserId();
         this.todo = scheduler.getTodo();
-        this.writer = scheduler.getWriter();
-        this.password = scheduler.getPassword();
-        this.create_date = scheduler.getCreate_date().toLocalDate();
-        this.update_date = scheduler.getUpdate_date().toLocalDate();
+        this.createDate = scheduler.getCreateDate();
+        this.updateDate = scheduler.getUpdateDate();
     }
 }
