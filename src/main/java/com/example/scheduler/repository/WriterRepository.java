@@ -5,4 +5,5 @@ import com.example.scheduler.entity.Writer;
 
 public interface WriterRepository {
     WriterResponseDto saveWriter(Writer writer);
+    int updateUserName(Long userId, String name);
 }

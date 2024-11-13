@@ -78,22 +78,14 @@ public class SchedulerRepositoryImpl implements SchedulerRepository {
 
     //선택 일정 수정
     @Override
-    public int updateSchedule(Long userId, String password, String todo) {
-        if(todo == null) {
-            return jdbcTemplate.update("UPDATE schedules SET userId = ? ,updateDate = now() WHERE userId = ? AND password = ? ",  userId, userId, password);
-        }
-        else if(userId == null) {
-            return jdbcTemplate.update("UPDATE schedules SET todo = ?, updateDate = now() WHERE userId = ? AND password = ? ", todo, userId, password);
-        }
-        else{
-            return jdbcTemplate.update("UPDATE schedules SET todo = ?, updateDate = now() WHERE userId = ? AND password = ? ", todo, userId, password);
-        }
+    public int updateSchedule(Long id,String todo, String password) {
+        return jdbcTemplate.update("UPDATE schedules SET todo = ?, updateDate = now() WHERE id = ? AND password = ? ", todo, id, password);
     }
 
     //선택 일정 삭제
     @Override
-    public int deleteSchedule(Long userId, String password) {
-        return jdbcTemplate.update("delete from schedules where userId = ? AND password = ?", userId, password);
+    public int deleteSchedule(Long id, String password) {
+        return jdbcTemplate.update("delete from schedules where id = ? AND password = ?", id, password);
     }
 
 

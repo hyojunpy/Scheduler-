@@ -6,6 +6,7 @@ import com.example.scheduler.service.SchedulerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -39,25 +40,29 @@ public class SchedulerController {
         return schedulerService.findAllSchedules(updateDate, userId);
     }
     //선택 일정 조회
-    @GetMapping("/{userId}")
-    public ResponseEntity<SchedulerResponseDto> findScheduleById(@PathVariable Long userId) {
-        return new ResponseEntity<>(schedulerService.findScheduleById(userId), HttpStatus.OK);
+    @GetMapping("/{id}")
+    public ResponseEntity<SchedulerResponseDto> findScheduleById(@PathVariable Long id) {
+        return new ResponseEntity<>(schedulerService.findScheduleById(id), HttpStatus.OK);
     }
     //선택 일정 수정
-    @PatchMapping("/{userId}")
+    @PutMapping("/{id}")
     public ResponseEntity<SchedulerResponseDto> updateTodoOrWriter(
-            @PathVariable Long userId,
+            @PathVariable Long id,
             @RequestBody SchedulerRequestDto dto
     ) {
-        return new ResponseEntity<>(schedulerService.updateTodoOrWriter(userId, dto.getPassword(), dto.getTodo()), HttpStatus.OK);
+        if(dto.getTodo() == null || dto.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "todo and name are required values");
+        }
+        return new ResponseEntity<>(schedulerService.updateTodoOrWriter(id, dto.getName(), dto.getTodo(), dto.getPassword()), HttpStatus.OK);
     }
     //선택 일정 삭제
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSchedule(
-            @PathVariable Long userId,
+            @PathVariable Long id,
             @RequestBody SchedulerRequestDto dto
     ) {
-        schedulerService.deleteSchedule(userId, dto.getPassword());
+        schedulerService.deleteSchedule(id, dto.getPassword());
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

@@ -14,7 +14,7 @@ public interface SchedulerRepository {
     // 선택 일정 조회
     Scheduler  findScheduleByIdOrElseThrow(Long userId);
     // 선택 일정 수정
-    int updateSchedule(Long userId, String password, String todo);
+    int updateSchedule(Long userId, String todo, String password);
     // 일정 삭제
     int deleteSchedule(Long userId, String password);
 }

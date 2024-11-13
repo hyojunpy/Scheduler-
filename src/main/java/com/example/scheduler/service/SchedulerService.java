@@ -15,7 +15,7 @@ public interface SchedulerService {
     //선택 일정 조회
     SchedulerResponseDto findScheduleById(Long userId);
     //선택 일정 수정
-    SchedulerResponseDto updateTodoOrWriter(Long userId, String password, String todo);
+    SchedulerResponseDto updateTodoOrWriter(Long Id, String name, String todo, String password );
     //일정 삭제
     void deleteSchedule(Long userId, String password);
 }

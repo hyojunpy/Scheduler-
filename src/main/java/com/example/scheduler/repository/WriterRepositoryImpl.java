@@ -48,6 +48,11 @@ public class WriterRepositoryImpl implements WriterRepository{
 //        return new WriterResponseDto(key.longValue(), writer.getName(), writer.getEmail(), writer.getCreateDate(), writer.getUpdateDate());
     }
 
+    @Override
+    public int updateUserName(Long userId, String name) {
+        return jdbcTemplate.update("UPDATE user SET name = ? WHERE userId = ? ",  name, userId);
+    }
+
     private RowMapper<WriterResponseDto> writerRowMapper() {
         return new RowMapper<WriterResponseDto>() {
             @Override

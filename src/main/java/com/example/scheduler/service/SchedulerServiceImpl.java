@@ -53,30 +53,35 @@ public class SchedulerServiceImpl implements SchedulerService {
     //선택 일정 수정
     @Transactional
     @Override
-    public SchedulerResponseDto updateTodoOrWriter(Long userId, String password, String todo) {
+    public SchedulerResponseDto updateTodoOrWriter(Long id, String name, String todo, String password ) {
+        Long userId = schedulerRepository.findScheduleByIdOrElseThrow(id).getUserId();
 
-        if (todo == null && userId == null) {
+        if (todo == null && name == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The todo or writer are required values.");
         }
+        int updatedRowName = writerRepository.updateUserName(userId, name);
+        int updateRow = schedulerRepository.updateSchedule(id, todo, password);
 
-        int updateRow = schedulerRepository.updateSchedule(userId, password, todo);
-
+        if (updatedRowName == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
         if (updateRow == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exist id or password = " + userId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule not found");
         }
 
-        Scheduler scheduler= schedulerRepository.findScheduleByIdOrElseThrow(userId);
+        Scheduler scheduler= schedulerRepository.findScheduleByIdOrElseThrow(id);
 
         return new SchedulerResponseDto(scheduler);
     }
+
     //일정 삭제
     @Override
-    public void deleteSchedule(Long userId, String password) {
+    public void deleteSchedule(Long id, String password) {
 
-        int deleteRow = schedulerRepository.deleteSchedule(userId, password);
+        int deleteRow = schedulerRepository.deleteSchedule(id, password);
 
         if (deleteRow == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exitst userId = " + userId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Does not exitst id = " + id);
         }
     }
 
